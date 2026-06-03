@@ -233,6 +233,7 @@ def main():
     if not sheet_id:
         sys.exit("錯誤：請設定 SHEET_ID 環境變數")
     use_ai     = os.environ.get("USE_AI", "true").lower() == "true"
+    print(f"AI 功能：{'開啟（模型：' + os.environ.get('GEMINI_MODEL','') + '）' if use_ai else '關閉'}")
     gemini_model = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
 
     now      = datetime.now(tz=TW_TZ)
