@@ -169,13 +169,21 @@ def fetch_content(url: str) -> str:
 
 
 # ── Gemini AI ────────────────────────────────────────────────────────────────
-def gemini_generate(prompt: str, model_name: str = "gemini-2.0-flash") -> str:
-    try:
-        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
-        result = client.models.generate_content(model=model_name, contents=prompt)
-        return result.text.strip()
-    except Exception as e:
-        return f"[AI 失敗：{e}]"
+def gemini_generate(prompt: str, model_name: str = "gemini-1.5-flash") -> str:
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
+    for attempt in range(3):
+        try:
+            result = client.models.generate_content(model=model_name, contents=prompt)
+            return result.text.strip()
+        except Exception as e:
+            msg = str(e)
+            if "429" in msg and attempt < 2:
+                wait = 30 * (attempt + 1)   # 30s, 60s
+                print(f"  [429 限流] 等待 {wait} 秒後重試…")
+                time.sleep(wait)
+            else:
+                return f"[AI 失敗：{msg[:120]}]"
+    return "[AI 失敗：重試次數用盡]"
 
 
 def make_summary(content: str, model_name: str) -> str:
