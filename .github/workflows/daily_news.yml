@@ -2,8 +2,13 @@ name: Daily News Fetch
 
 on:
   schedule:
-    # 每天 UTC 01:30 = 台灣時間 09:30
-    - cron: "30 1 * * *"
+    # 台灣時間 06:00/09:00/12:00/15:00/18:00/21:00（每3小時，UTC-8）
+    - cron: "0 22 * * *"   # 06:00 TW
+    - cron: "0 1  * * *"   # 09:00 TW
+    - cron: "0 4  * * *"   # 12:00 TW
+    - cron: "0 7  * * *"   # 15:00 TW
+    - cron: "0 10 * * *"   # 18:00 TW
+    - cron: "0 13 * * *"   # 21:00 TW
   workflow_dispatch:   # 允許手動觸發
 
 jobs:
