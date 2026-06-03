@@ -32,5 +32,5 @@ jobs:
           GOOGLE_CREDS_JSON: ${{ secrets.GOOGLE_CREDS_JSON }}
           SHEET_ID:          ${{ secrets.SHEET_ID }}
           USE_AI:            "true"
-          GEMINI_MODEL:      "gemini-1.5-flash"
+          GEMINI_MODEL:      "gemini-2.0-flash-lite"
         run: python news_daily.py

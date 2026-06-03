@@ -169,7 +169,7 @@ def fetch_content(url: str) -> str:
 
 
 # ── Gemini AI ────────────────────────────────────────────────────────────────
-def gemini_generate(prompt: str, model_name: str = "gemini-1.5-flash") -> str:
+def gemini_generate(prompt: str, model_name: str = "gemini-2.0-flash-lite") -> str:
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
     for attempt in range(3):
         try:
