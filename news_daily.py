@@ -98,44 +98,42 @@ def fetch_list(start_dt: datetime, end_dt: datetime) -> list[dict]:
         if not trs:
             break
 
-        all_old = True
-        for tr in trs:
-            tds = tr.find_all("td")
-            if len(tds) < 3:
-                continue
-            date_text = title_text = dept_text = ""
-            link_tag  = None
-            for td in tds:
-                t = td.get_text(strip=True)
-                if re.search(r"\d{2,3}[-年]\d{1,2}[-月]\d{1,2}", t):
-                    date_text = t
-                a = td.find("a")
-                if a and len(a.get_text(strip=True)) > 5:
-                    link_tag, title_text = a, a.get_text(strip=True)
-            non_empty = [td.get_text(strip=True) for td in tds if td.get_text(strip=True)]
-            if non_empty:
-                dept_text = non_empty[-1]
-                if dept_text == title_text or re.search(r"\d{2,3}[-年]", dept_text):
-                    dept_text = non_empty[-2] if len(non_empty) >= 2 else ""
+        found_in_page = 0
+        oldest_in_page = None
 
-            pub = roc_to_date(date_text)
+        for tr in trs:
+            date_td  = tr.select_one('td[data-title="發布日期"]')
+            title_td = tr.select_one('td[data-title="標題"] a')
+            dept_td  = tr.select_one('td[data-title="發布機關"]')
+            if not date_td or not title_td:
+                continue
+
+            date_str  = date_td.get_text(strip=True)
+            pub       = roc_to_date(date_str)
             if not pub:
                 continue
+
+            # 記錄這頁最舊的日期，用於判斷是否繼續翻頁
+            if oldest_in_page is None or pub < oldest_in_page:
+                oldest_in_page = pub
+
             pub_day   = pub.replace(hour=0, minute=0, second=0)
             start_day = start_dt.replace(hour=0, minute=0, second=0)
             end_day   = end_dt.replace(hour=0, minute=0, second=0)
-            if pub_day < start_day:
+            if pub_day < start_day or pub_day > end_day:
                 continue
-            if pub_day > end_day:
-                continue
-            all_old = False
-            raw = link_tag["href"] if (link_tag and link_tag.get("href")) else ""
+
+            title_text = title_td.get_text(strip=True)
+            dept_text  = dept_td.get_text(strip=True) if dept_td else ""
+            raw  = title_td.get("href", "")
             href = raw if raw.startswith("http") else f"{BASE_GOV}/{raw.lstrip('/')}"
+            found_in_page += 1
             rows.append({"來源": "市府新聞稿", "日期": pub.strftime("%Y-%m-%d"),
                          "標題": title_text, "發布機關": dept_text,
                          "連結": href, "內容": "", "摘要": "", "FAQ": ""})
 
-        if all_old and page > 1:
+        # 若這頁最舊的文章已早於起始日，不需再翻頁
+        if oldest_in_page and oldest_in_page.replace(hour=0,minute=0,second=0) < start_dt.replace(hour=0,minute=0,second=0):
             break
         if len(trs) < 100:
             break
