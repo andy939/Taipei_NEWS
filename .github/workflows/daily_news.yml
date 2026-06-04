@@ -30,4 +30,6 @@ jobs:
           SHEET_ID:          ${{ secrets.SHEET_ID }}
           USE_AI:            "false"
           GEMINI_MODEL:      "gemini-2.0-flash-lite"
+          LINE_CHANNEL_TOKEN: ${{ secrets.LINE_CHANNEL_TOKEN }}
+          LINE_USER_ID:       ${{ secrets.LINE_USER_ID }}
         run: python news_daily.py

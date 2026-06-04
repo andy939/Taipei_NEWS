@@ -166,7 +166,39 @@ def fetch_content(url: str) -> str:
     return ""
 
 
-# ── Gemini AI ────────────────────────────────────────────────────────────────
+# ── LINE 通知 ─────────────────────────────────────────────────────────────────
+def send_line(rows: list[dict], start_dt: datetime, end_dt: datetime) -> None:
+    token   = os.environ.get("LINE_CHANNEL_TOKEN", "")
+    user_id = os.environ.get("LINE_USER_ID", "")
+    if not token or not user_id:
+        print("LINE 通知未設定，略過。")
+        return
+
+    period = f"{start_dt.strftime('%m/%d %H:%M')} ~ {end_dt.strftime('%m/%d %H:%M')}"
+    lines  = [f"【臺北市府新聞】{period}", f"共 {len(rows)} 筆新聞", ""]
+    for i, r in enumerate(rows[:10], 1):          # 最多列 10 則
+        lines.append(f"{i}. {r['標題'][:40]}")
+    if len(rows) > 10:
+        lines.append(f"…等共 {len(rows)} 則")
+
+    msg = "\n".join(lines)
+    try:
+        resp = requests.post(
+            "https://api.line.me/v2/bot/message/push",
+            headers={"Authorization": f"Bearer {token}",
+                     "Content-Type": "application/json"},
+            json={"to": user_id, "messages": [{"type": "text", "text": msg}]},
+            timeout=15,
+        )
+        if resp.status_code == 200:
+            print("LINE 通知已發送")
+        else:
+            print(f"LINE 通知失敗：{resp.status_code} {resp.text[:100]}")
+    except Exception as e:
+        print(f"LINE 通知錯誤：{e}")
+
+
+# ── Gemini AI ─────────────────────────────────────────────────────────────────
 def gemini_generate(prompt: str, model_name: str = "gemini-2.0-flash-lite") -> str:
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
     for attempt in range(3):
@@ -279,6 +311,9 @@ def main():
     append_data = [[r[c] for c in SHEET_COLS] for r in new_rows]
     ws.append_rows(append_data, value_input_option="RAW")
     print(f"完成，共寫入 {len(append_data)} 筆")
+
+    # --- LINE 通知 ---
+    send_line(new_rows, start_dt, end_dt)
 
 
 if __name__ == "__main__":
