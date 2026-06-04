@@ -172,13 +172,7 @@ def send_line(rows: list[dict], start_dt: datetime, end_dt: datetime) -> None:
         return
 
     period = f"{start_dt.strftime('%m/%d %H:%M')} ~ {end_dt.strftime('%m/%d %H:%M')}"
-    lines  = [f"【臺北市府新聞】{period}", f"共 {len(rows)} 筆新聞", ""]
-    for i, r in enumerate(rows[:10], 1):          # 最多列 10 則
-        lines.append(f"{i}. {r['標題'][:40]}")
-    if len(rows) > 10:
-        lines.append(f"…等共 {len(rows)} 則")
-
-    msg = "\n".join(lines)
+    msg = f"【臺北市府新聞】{period}\n共 {len(rows)} 筆新聞已更新至 Google Sheets"
     try:
         resp = requests.post(
             "https://api.line.me/v2/bot/message/push",
