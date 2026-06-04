@@ -237,7 +237,8 @@ def main():
     gemini_model = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
 
     now      = datetime.now(tz=TW_TZ)
-    start_dt = now.replace(hour=0, minute=0, second=0) - timedelta(days=1)
+    # 每次抓「過去4小時」（排程每3小時，多抓1小時保險，去重機制防止重複）
+    start_dt = now - timedelta(hours=4)
     end_dt   = now
     print(f"抓取期間：{start_dt.strftime('%Y-%m-%d %H:%M')} ~ {end_dt.strftime('%Y-%m-%d %H:%M')}")
 
