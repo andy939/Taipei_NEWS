@@ -172,19 +172,35 @@ def send_line(rows: list[dict], start_dt: datetime, end_dt: datetime) -> None:
         return
 
     period = f"{start_dt.strftime('%m/%d %H:%M')} ~ {end_dt.strftime('%m/%d %H:%M')}"
-    msg = f"【臺北市府新聞】{period}\n共 {len(rows)} 筆新聞已更新至 Google Sheets"
-    try:
+    header = f"【臺北市府新聞】{period}　共 {len(rows)} 筆\n"
+
+    # 每筆約 150 字，每則訊息最多放 20 筆
+    def push(text: str):
         resp = requests.post(
             "https://api.line.me/v2/bot/message/push",
             headers={"Authorization": f"Bearer {token}",
                      "Content-Type": "application/json"},
-            json={"to": user_id, "messages": [{"type": "text", "text": msg}]},
+            json={"to": user_id, "messages": [{"type": "text", "text": text}]},
             timeout=15,
         )
-        if resp.status_code == 200:
-            print("LINE 通知已發送")
-        else:
+        if resp.status_code != 200:
             print(f"LINE 通知失敗：{resp.status_code} {resp.text[:100]}")
+
+    try:
+        chunk, chunk_rows = header, []
+        for r in rows:
+            item = (f"📅 {r['日期']}\n"
+                    f"📌 {r['標題']}\n"
+                    f"🏢 {r['發布機關']}\n"
+                    f"🔗 {r['連結']}\n\n")
+            if len(chunk) + len(item) > 4800:
+                push(chunk.strip())
+                chunk = ""
+            chunk += item
+
+        if chunk.strip():
+            push(chunk.strip())
+        print(f"LINE 通知已發送（共 {len(rows)} 筆）")
     except Exception as e:
         print(f"LINE 通知錯誤：{e}")
 
