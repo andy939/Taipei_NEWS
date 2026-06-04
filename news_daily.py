@@ -90,11 +90,8 @@ def fetch_list(start_dt: datetime, end_dt: datetime) -> list[dict]:
         except Exception as e:
             print(f"  [錯誤] {e}"); break
 
-        soup  = BeautifulSoup(resp.text, "html.parser")
-        table = soup.select_one("table.table") or soup.find("table")
-        if not table:
-            break
-        trs = table.select("tbody tr") or table.select("tr")[1:]
+        soup = BeautifulSoup(resp.text, "html.parser")
+        trs  = soup.select("tbody tr")
         if not trs:
             break
 
@@ -269,9 +266,13 @@ def main():
     gemini_model = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
 
     now      = datetime.now(tz=TW_TZ)
-    # 每次抓「過去4小時」（排程每3小時，多抓1小時保險，去重機制防止重複）
-    start_dt = now - timedelta(hours=4)
-    end_dt   = now
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    # 06:00 之前的第一班，把昨天也一起抓（避免深夜發稿漏抓）
+    if now.hour < 7:
+        start_dt = today_start - timedelta(days=1)
+    else:
+        start_dt = today_start
+    end_dt = now
     print(f"抓取期間：{start_dt.strftime('%Y-%m-%d %H:%M')} ~ {end_dt.strftime('%Y-%m-%d %H:%M')}")
 
     # --- 連接 Sheets，取已有 URL ---
