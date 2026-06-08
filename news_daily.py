@@ -165,22 +165,21 @@ def fetch_content(url: str) -> str:
 
 # ── LINE 通知 ─────────────────────────────────────────────────────────────────
 def send_line(rows: list[dict], start_dt: datetime, end_dt: datetime) -> None:
-    token   = os.environ.get("LINE_CHANNEL_TOKEN", "")
-    user_id = os.environ.get("LINE_USER_ID", "")
-    if not token or not user_id:
+    token = os.environ.get("LINE_CHANNEL_TOKEN", "")
+    if not token:
         print("LINE 通知未設定，略過。")
         return
 
     period = f"{start_dt.strftime('%m/%d %H:%M')} ~ {end_dt.strftime('%m/%d %H:%M')}"
     header = f"【臺北市府新聞】{period}　共 {len(rows)} 筆\n"
 
-    # 每筆約 150 字，每則訊息最多放 20 筆
+    # 廣播：所有加好友的人都收到，不需要指定 User ID
     def push(text: str):
         resp = requests.post(
-            "https://api.line.me/v2/bot/message/push",
+            "https://api.line.me/v2/bot/message/broadcast",
             headers={"Authorization": f"Bearer {token}",
                      "Content-Type": "application/json"},
-            json={"to": user_id, "messages": [{"type": "text", "text": text}]},
+            json={"messages": [{"type": "text", "text": text}]},
             timeout=15,
         )
         if resp.status_code != 200:
