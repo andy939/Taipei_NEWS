@@ -287,6 +287,21 @@ def main():
     # --- 連接 Sheets，取已有 URL ---
     print("連接 Google Sheets…")
     ws = connect_sheet(sheet_id)
+
+    # --- 刪除 4 天前的舊資料（不含第1列標題，不含4天前當天） ---
+    cutoff = (datetime.now(tz=TW_TZ) - timedelta(days=4)).strftime("%Y-%m-%d")
+    all_rows = ws.get_all_values()
+    rows_to_delete = []
+    for i, row in enumerate(all_rows):
+        if i == 0:          # 跳過標題列
+            continue
+        if len(row) >= 2 and row[1] != "" and row[1] < cutoff:
+            rows_to_delete.append(i + 1)   # Sheets 列號從 1 開始
+    for row_num in sorted(rows_to_delete, reverse=True):   # 從底部往上刪，避免列號偏移
+        ws.delete_rows(row_num)
+    if rows_to_delete:
+        print(f"已刪除 {len(rows_to_delete)} 筆過期資料（早於 {cutoff}）")
+
     existing_urls = set(ws.col_values(5))   # 第5欄 = 連結
 
     # --- 抓新聞列表 ---
