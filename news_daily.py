@@ -289,7 +289,7 @@ def main():
     ws = connect_sheet(sheet_id)
 
     # --- 刪除 4 天前的舊資料（不含第1列標題，不含4天前當天） ---
-    cutoff = (datetime.now(tz=TW_TZ) - timedelta(days=4)).strftime("%Y-%m-%d")
+    cutoff = (datetime.now(tz=TW_TZ) - timedelta(days=2)).strftime("%Y-%m-%d")
     all_rows = ws.get_all_values()
     rows_to_delete = []
     for i, row in enumerate(all_rows):
